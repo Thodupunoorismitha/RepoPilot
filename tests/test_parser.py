@@ -34,9 +34,16 @@ def greet(name):
 ] == ["add"]
 
     assert result["imports"] == [
-        "os",
-        "datetime.datetime",
-    ]
+    {
+        "module": "os",
+        "alias": None
+    },
+    {
+        "module": "datetime",
+        "name": "datetime",
+        "alias": None
+    }
+]
 
 
 def test_parser_extracts_function_line_numbers():
@@ -236,4 +243,21 @@ class Calculator:
     assert calculate_method["calls"] == [
         "self.add",
         "print",
+    ]
+
+def test_parser_extracts_import_aliases():
+
+    source_code = """
+from auth import login as user_login
+"""
+
+    parser = PythonCodeParser()
+    result = parser.parse(source_code)
+
+    assert result["imports"] == [
+        {
+            "module": "auth",
+            "name": "login",
+            "alias": "user_login"
+        }
     ]

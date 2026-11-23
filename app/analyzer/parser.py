@@ -79,19 +79,24 @@ class PythonCodeParser:
                     "end_line": node.end_lineno,
                 })
 
-            # Extract regular imports
+            # Extract regular imports           
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    result["imports"].append(alias.name)
+                    result["imports"].append({
+                        "module": alias.name,
+                        "alias": alias.asname
+                    })
 
-            # Extract from-import statements
+            # Extract from-import statements           
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""
 
                 for alias in node.names:
-                    result["imports"].append(
-                        f"{module}.{alias.name}" if module else alias.name
-                    )
+                    result["imports"].append({
+                        "module": module,
+                        "name": alias.name,
+                        "alias": alias.asname
+                    })
 
         result["functions"].sort(key=lambda x: x["start_line"])
         result["classes"].sort(key=lambda x: x["start_line"])
