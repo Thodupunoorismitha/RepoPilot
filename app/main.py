@@ -2,7 +2,10 @@ from fastapi import FastAPI, HTTPException
 import networkx as nx
 from app.analyzer.service import RepositoryAnalysisService
 from app.schemas.analysis import AnalyzeRequest, AnalyzeResponse
+from app.schemas.qa import QARequest, QAResponse
+from app.ai.qa_service import CodeQAService
 
+qa_service = CodeQAService()
 
 app = FastAPI(
     title="RepoPilot API",
@@ -263,3 +266,27 @@ def analyze_impact(name: str):
         "function": name,
         "results": results
     }
+
+@app.post("/ask", response_model=QAResponse)
+def ask_question(request: QARequest):
+
+    try:
+        result = qa_service.answer_question(
+            repository_id=request.repository_id,
+            question=request.question,
+            top_k=request.top_k
+        )
+
+        return result
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate answer"
+        )

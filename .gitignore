@@ -33,3 +33,5 @@ __pycache__/
 # Temporary test and migration scripts
 test_rollback.py
 consolidate_repositories.py
+
+.env

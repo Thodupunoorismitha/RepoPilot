@@ -177,3 +177,29 @@ class SymbolDB:
         connection.close()
 
         return symbols
+
+    
+    def find_symbol(self, repository_id: int, name: str, file_path: str):
+        """
+        Find a symbol using repository, name, and file path.
+        """
+
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM symbols
+            WHERE repository_id = ?
+            AND name = ?
+            AND file_path = ?
+            """,
+            (repository_id, name, file_path)
+        )
+
+        symbol = cursor.fetchone()
+        connection.close()
+
+        return symbol
+

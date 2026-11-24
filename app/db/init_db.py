@@ -52,6 +52,23 @@ def initialize_database():
         )
     """)
 
+    # Table 4: Code chunks
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS code_chunks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            repository_id INTEGER NOT NULL,
+            file_path TEXT NOT NULL,
+            symbol_name TEXT NOT NULL,
+            chunk_type TEXT NOT NULL,
+            start_line INTEGER NOT NULL,
+            end_line INTEGER NOT NULL,
+            content TEXT NOT NULL,
+
+            FOREIGN KEY (repository_id)
+                REFERENCES repositories(id)
+        )
+    """)
+
     connection.commit()
     connection.close()
 
