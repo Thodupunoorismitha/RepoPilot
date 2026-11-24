@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from app.db.persistence import RepositoryPersistence
 from app.analyzer.scanner import RepositoryScanner
 from app.graph.symbol_table import SymbolTable
 from app.graph.dependency_graph import DependencyGraphBuilder
@@ -9,6 +9,7 @@ class RepositoryAnalysisService:
 
     def __init__(self):
         self.scanner = RepositoryScanner()
+        self.persistence = RepositoryPersistence()
 
     def analyze_repository(self, repo_path: str):
 
@@ -59,11 +60,19 @@ class RepositoryAnalysisService:
 
         failed_files = total_files - successful_files
 
+        # Step 6: Save analysis to SQLite
+        persistence_result = self.persistence.save_analysis(
+            str(path),
+            scan_results,
+            graph_builder
+        )
+
         return {
             "total_files": total_files,
             "successful_files": successful_files,
             "failed_files": failed_files,
             "symbol_table": symbol_table,
             "graph_builder": graph_builder,
-            "scan_results": scan_results
+            "scan_results": scan_results,
+            "persistence": persistence_result
         }

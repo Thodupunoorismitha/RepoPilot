@@ -20,3 +20,16 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+# SQLite database files
+app/db/*.db
+app/db/*.sqlite
+app/db/*.sqlite3
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Temporary test and migration scripts
+test_rollback.py
+consolidate_repositories.py

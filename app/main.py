@@ -38,6 +38,9 @@ def analyze_repository(request: AnalyzeRequest):
             "total_files": result["total_files"],
             "successful_files": result["successful_files"],
             "failed_files": result["failed_files"],
+            "repository_id": result["persistence"]["repository_id"],
+            "symbols_saved": result["persistence"]["symbols_saved"],
+            "relationships_saved": result["persistence"]["relationships_saved"],
             "message": "Repository analysis completed"
         }
 
