@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException
 import networkx as nx
+
 from app.analyzer.service import RepositoryAnalysisService
 from app.schemas.analysis import AnalyzeRequest, AnalyzeResponse
-from app.schemas.qa import QARequest, QAResponse
+from app.schemas.qa import AskRequest, AskResponse
 from app.ai.qa_service import CodeQAService
 
-qa_service = CodeQAService()
 
 app = FastAPI(
     title="RepoPilot API",
@@ -15,6 +15,8 @@ app = FastAPI(
 
 
 analysis_service = RepositoryAnalysisService()
+qa_service = CodeQAService()
+
 app.state.analysis_result = None
 
 
@@ -35,6 +37,7 @@ def analyze_repository(request: AnalyzeRequest):
         result = analysis_service.analyze_repository(
             request.repo_path
         )
+
         app.state.analysis_result = result
 
         return {
@@ -59,10 +62,11 @@ def analyze_repository(request: AnalyzeRequest):
             detail=str(error)
         )
 
+
 @app.get("/symbols")
 def search_symbols(name: str):
+    """Search for functions by name."""
 
-    # Check whether a repository has been analyzed
     analysis_result = app.state.analysis_result
 
     if analysis_result is None:
@@ -71,21 +75,16 @@ def search_symbols(name: str):
             detail="Analyze a repository first"
         )
 
-    # Search for matching functions
     symbol_table = analysis_result["symbol_table"]
-
     matching_symbols = symbol_table.find_symbols(name)
 
-    # Convert matching symbol IDs into response details
     matches = []
 
     for symbol_id in matching_symbols:
 
         file_path, function_name = symbol_id.rsplit(":", 1)
 
-        scan_results = analysis_result["scan_results"]
-
-        for file_result in scan_results:
+        for file_result in analysis_result["scan_results"]:
 
             if file_result["status"] != "success":
                 continue
@@ -96,7 +95,6 @@ def search_symbols(name: str):
             for function in file_result["analysis"]["functions"]:
 
                 if function["name"] == function_name:
-
                     matches.append({
                         "file_path": file_path,
                         "start_line": function["start_line"],
@@ -108,10 +106,11 @@ def search_symbols(name: str):
         "matches": matches
     }
 
+
 @app.get("/callers/{name}")
 def find_callers(name: str):
+    """Find functions that call the specified function."""
 
-    # Check whether a repository has been analyzed
     analysis_result = app.state.analysis_result
 
     if analysis_result is None:
@@ -123,7 +122,6 @@ def find_callers(name: str):
     graph = analysis_result["graph_builder"].graph
     symbol_table = analysis_result["symbol_table"]
 
-    # Find matching function IDs
     matching_symbols = symbol_table.find_symbols(name)
 
     if not matching_symbols:
@@ -136,13 +134,10 @@ def find_callers(name: str):
 
     for symbol_id in matching_symbols:
 
-        # Find all direct callers
         caller_ids = list(graph.predecessors(symbol_id))
-
         callers = []
 
         for caller_id in caller_ids:
-
             caller_details = graph.nodes[caller_id]
 
             callers.append({
@@ -161,10 +156,11 @@ def find_callers(name: str):
         "results": results
     }
 
+
 @app.get("/dependencies/{name}")
 def find_dependencies(name: str):
+    """Find functions called by the specified function."""
 
-    # Check whether a repository has been analyzed
     analysis_result = app.state.analysis_result
 
     if analysis_result is None:
@@ -176,7 +172,6 @@ def find_dependencies(name: str):
     graph = analysis_result["graph_builder"].graph
     symbol_table = analysis_result["symbol_table"]
 
-    # Find matching function IDs
     matching_symbols = symbol_table.find_symbols(name)
 
     if not matching_symbols:
@@ -189,13 +184,10 @@ def find_dependencies(name: str):
 
     for symbol_id in matching_symbols:
 
-        # Find functions called by this function
         dependency_ids = list(graph.successors(symbol_id))
-
         dependencies = []
 
         for dependency_id in dependency_ids:
-
             dependency_details = graph.nodes[dependency_id]
 
             dependencies.append({
@@ -214,10 +206,11 @@ def find_dependencies(name: str):
         "results": results
     }
 
+
 @app.get("/impact/{name}")
 def analyze_impact(name: str):
+    """Find direct and indirect callers affected by a function change."""
 
-    # Check whether a repository has been analyzed
     analysis_result = app.state.analysis_result
 
     if analysis_result is None:
@@ -229,7 +222,6 @@ def analyze_impact(name: str):
     graph = analysis_result["graph_builder"].graph
     symbol_table = analysis_result["symbol_table"]
 
-    # Find matching function IDs
     matching_symbols = symbol_table.find_symbols(name)
 
     if not matching_symbols:
@@ -242,13 +234,10 @@ def analyze_impact(name: str):
 
     for symbol_id in matching_symbols:
 
-        # Find all direct and indirect callers
         affected_ids = nx.ancestors(graph, symbol_id)
-
         affected_functions = []
 
         for affected_id in affected_ids:
-
             function_details = graph.nodes[affected_id]
 
             affected_functions.append({
@@ -267,8 +256,10 @@ def analyze_impact(name: str):
         "results": results
     }
 
-@app.post("/ask", response_model=QAResponse)
-def ask_question(request: QARequest):
+
+@app.post("/ask", response_model=AskResponse)
+def ask_question(request: AskRequest):
+    """Answer questions about an analyzed repository using RAG."""
 
     try:
         result = qa_service.answer_question(
@@ -285,7 +276,7 @@ def ask_question(request: QARequest):
             detail=str(error)
         )
 
-    except Exception as error:
+    except Exception:
         raise HTTPException(
             status_code=500,
             detail="Failed to generate answer"

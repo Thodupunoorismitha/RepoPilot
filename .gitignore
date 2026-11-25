@@ -1,37 +1,27 @@
+# Environment variables and secrets
+.env
+.env.*
+
+# Virtual environments
+.venv/
+venv/
+
 # Python cache
 __pycache__/
 *.py[cod]
 
-# Virtual environment
-.venv/
-venv/
-
-# Environment variables
-.env
-
-# Pytest
+# Pytest cache
 .pytest_cache/
 
-# Databases
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 
-# IDE
+# IDE settings
 .vscode/
 .idea/
-
-# SQLite database files
-app/db/*.db
-app/db/*.sqlite
-app/db/*.sqlite3
-
-# Python cache
-__pycache__/
-*.py[cod]
 
 # Temporary test and migration scripts
 test_rollback.py
 consolidate_repositories.py
-
-.env
